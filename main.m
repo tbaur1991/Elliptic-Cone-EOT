@@ -30,9 +30,6 @@ close all
 clear
 clc
 
-% seed generator
-rng("default")
-
 % simulation environment
 nSamples = 100;
 nMeas = 50;
