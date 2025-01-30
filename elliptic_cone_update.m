@@ -18,8 +18,8 @@ function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,
 
         % calculate samples for S2KF
         if strcmp(filter,'ERHM')
-            Xu = [X; 1/3*ones(n_upd,1); zeros(n_upd,1)]; 
-            L = blkdiag(chol(P)', chol(1/18*eye(n_upd))', chol(sig_r^2*eye(n_upd))');
+            Xu = [X; zeros(2*n_upd,1)]; 
+            L = blkdiag(chol(P)', chol(eye(n_upd))', chol(sig_r^2*eye(n_upd))');
             z_predict = zeros(4*n_upd,numSamples);
         elseif strcmp(filter,'GAM')
             Xu = X; 
@@ -29,6 +29,9 @@ function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,
             error('Wrong filter setting!')
         end
         samples_upd = L*samples + Xu;
+        if strcmp(filter,'ERHM')
+            samples_upd(nx+1:nx+n_upd,:) = 1 - sqrt(1 - 0.5*(1 + erf(samples_upd(nx+1:nx+n_upd,:)/sqrt(2))));
+        end
     
         % predict sigma points
         for i = 1:numSamples
@@ -96,7 +99,7 @@ function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,
             meas_loc = R_rot'*(meas - pos); 
             % second step measurements inside or outside
             us = min(max(meas_loc(3,:)/h,0),1);
-            inside_outside = meas_loc(1,:).^2./((1 - us)*a - 3*sig_r).^2 + meas_loc(2,:).^2./((1 - us)*b - 3*sig_r).^2 - 1;
+            inside_outside = meas_loc(1,:).^2./((1 - us)*(a - 3*sig_r)).^2 + meas_loc(2,:).^2./((1 - us)*(b - 3*sig_r)).^2 - 1;
             % indices of measurements inside
             idx = find(inside_outside < 0); 
             % update estimate of inside measurement mean
