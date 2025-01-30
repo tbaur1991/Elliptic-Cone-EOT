@@ -1,7 +1,7 @@
 % *************************************************************************
 %    I   SSSS   DDDD
 %    I   S      D   D 
-%    I   SSSS   D   D    Institut f�r Systemdynamik
+%    I   SSSS   D   D    Institut fr Systemdynamik
 %    I      S   D   D
 %    I   SSSS   DDDD   
 % *************************************************************************
@@ -30,6 +30,9 @@ close all
 clear
 clc
 
+% seed generator
+rng("default")
+
 % simulation environment
 nSamples = 100;
 nMeas = 50;
@@ -41,7 +44,7 @@ do_plot = true;
 artificial_noise = true;
 filter = 'ERHM';
 source = 'radial';
-n_upd = 50;
+n_upd = 20;
 
 % triangular distributions
 pd1 = makedist("Triangular","a",0,"b",0,"c",1);
@@ -125,8 +128,8 @@ for j = 1:nMC
             P(:,:,k,j) = blkdiag(c, 2*eye(5));   
         else
             % prediction
-            X(:,k,j) = X(:,k-1);
-            P(:,:,k,j) = P(:,:,k-1) + Q;
+            X(:,k,j) = X(:,k-1,j);
+            P(:,:,k,j) = P(:,:,k-1,j) + Q;
         end
     
         % update elliptic cone
