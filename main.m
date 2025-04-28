@@ -89,7 +89,7 @@ ax = gca;
 
 % start filtering
 for j = 1:nMC
-    j
+    display(['MC run: ',num2str(j)])
     % artificial measurement noise 
     meanInX = 0; meanInY = 0; varInX = 0; varInY = 0;
     tao = 200;
@@ -134,10 +134,6 @@ for j = 1:nMC
         [X(:,k,j),P(:,:,k,j),meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X(:,k,j),P(:,:,k,j),meas,sig_r,samples,numSamples,samples2,numSamples2,n_upd,...
                                                               meanInX,meanInY,varInX,varInY,tao,artificial_noise,filter,source);
         times(k,j) = toc;
-
-        if k == 50
-            aaa=1;
-        end
     
         %% plot reference, measurement, and estimate
         if do_plot

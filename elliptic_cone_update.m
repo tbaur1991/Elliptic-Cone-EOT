@@ -1,4 +1,4 @@
-function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,samples,numSamples,samples2,numSamples2,n_upd,meanInX,meanInY,varInX,varInY,tao,art_noise,filter,source)
+function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,samples,numSamples,samples2,numSamples2,n_upd,meanInX,meanInY,varInX,varInY,tao,inside,filter,source)
     % dimensions
     nx = length(X);
     nMeas = size(Y,2);
@@ -90,7 +90,7 @@ function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,
         z_pred = mean(z_predict, 2);
     
         % calculate measurement noise covariance matrix
-        if art_noise
+        if inside
             % for asymmetric noise
             % first step measurements in local coordinates
             pos = X(1:3); or = X(4); 
@@ -102,18 +102,26 @@ function [X,P,meanInX,meanInY,varInX,varInY] = elliptic_cone_update(X,P,Y,sig_r,
             inside_outside = meas_loc(1,:).^2./((1 - us)*(a - 3*sig_r)).^2 + meas_loc(2,:).^2./((1 - us)*(b - 3*sig_r)).^2 - 1;
             % indices of measurements inside
             idx = find(inside_outside < 0); 
-            % update estimate of inside measurement mean
-            meanInX = 1/(1 + length(idx)/tao)*meanInX + 1/(tao + length(idx))*sum(abs(z_pred(2*idx-1)));
-            meanInY = 1/(1 + length(idx)/tao)*meanInY + 1/(tao + length(idx))*sum(abs(z_pred(2*idx)));
-            z_pred(2*idx-1) = z_pred(2*idx-1) + meanInX; z_pred(2*idx) = z_pred(2*idx) + meanInY;
-            % update estimate of inside measurement variance
-            varInX = 1/(1 + length(idx)/tao)*varInX + 1/(tao + length(idx))*sum((z_pred(2*idx-1) - meanInX).^2);
-            varInY = 1/(1 + length(idx)/tao)*varInY + 1/(tao + length(idx))*sum((z_pred(2*idx) - meanInY).^2);
-            % build covariance matrix
             if strcmp(filter,'ERHM')
+                % update estimate of inside measurement mean
+                meanInX = 1/(1 + length(idx)/tao)*meanInX + 1/(tao + length(idx))*sum(abs(z_pred(4*idx-3)));
+                meanInY = 1/(1 + length(idx)/tao)*meanInY + 1/(tao + length(idx))*sum(abs(z_pred(4*idx-2)));
+                z_pred(4*idx-3) = z_pred(4*idx-3) + meanInX; z_pred(4*idx-2) = z_pred(4*idx-2) + meanInY;
+                % update estimate of inside measurement variance
+                varInX = 1/(1 + length(idx)/tao)*varInX + 1/(tao + length(idx))*sum((z_pred(4*idx-3) - meanInX).^2);
+                varInY = 1/(1 + length(idx)/tao)*varInY + 1/(tao + length(idx))*sum((z_pred(4*idx-2) - meanInY).^2);
+                % build covariance matrix
                 R = repmat([sig_r^2*ones(1,2) 0 0], 1, n_upd);
                 R(4*idx-3) = varInX; R(4*idx-2) = varInY; R = diag(R);
             elseif strcmp(filter,'GAM')
+                % update estimate of inside measurement mean
+                meanInX = 1/(1 + length(idx)/tao)*meanInX + 1/(tao + length(idx))*sum(abs(z_pred(3*idx-2)));
+                meanInY = 1/(1 + length(idx)/tao)*meanInY + 1/(tao + length(idx))*sum(abs(z_pred(3*idx-1)));
+                z_pred(3*idx-2) = z_pred(3*idx-2) + meanInX; z_pred(3*idx-1) = z_pred(3*idx-1) + meanInY;
+                % update estimate of inside measurement variance
+                varInX = 1/(1 + length(idx)/tao)*varInX + 1/(tao + length(idx))*sum((z_pred(3*idx-2) - meanInX).^2);
+                varInY = 1/(1 + length(idx)/tao)*varInY + 1/(tao + length(idx))*sum((z_pred(3*idx-1) - meanInY).^2);
+                % build covariance matrix
                 R = sig_r^2*ones(1,3*n_upd);
                 R(3*idx-2) = varInX; R(3*idx-1) = varInY; R = diag(R(:));
             else
